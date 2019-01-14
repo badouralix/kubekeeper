@@ -1,0 +1,150 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from typing import Dict, List
+
+import configparser
+import os
+import subprocess
+import sys
+import tempfile
+import time
+
+
+class ValidationError(Exception):
+    pass
+
+
+def check_command(command: str, whitelist: Dict[str, None]) -> bool:
+    """
+    Return true iff command uses a subcommand in whitelist
+    """
+    for whitelist_command_prefix in whitelist:
+        if command.startswith(whitelist_command_prefix):
+            return True
+
+    return False
+
+
+def check_context(context: str, whitelist: Dict[str, None]) -> bool:
+    """
+    Return true iff context is in whitelist
+    """
+    return context.strip() in whitelist
+
+
+def check_last_validatation(context: str) -> bool:
+    """
+    Return true iff context has already been validated earlier
+    """
+    check_interval = os.getenv("KUBEKEEPER_CHECK_INTERVAL", default=900)
+    pidfile = os.path.join(tempfile.gettempdir(), os.getenv("KUBEKEEPER_PIDFILE", default="kubekeeper.pid"))
+
+    outdated = False
+
+    try:
+        if time.time() - os.path.getmtime(pidfile) > check_interval:
+            outdated = True
+        with open(pidfile, 'r') as f:
+            if f.read() != context:
+                outdated = True
+    except FileNotFoundError:
+        # We are conservative here, we assume we did not validate the context recently
+        outdated = True
+
+    return not outdated
+
+
+def must_run_validatation(context: str, command: str, include: Dict[str, Dict[str, None]], exclude: Dict[str, Dict[str, None]]) -> bool:
+    if check_context(context, include["context"]):
+        if check_command(command, exclude["command"]):
+            return False
+        else:
+            return True
+
+    if check_command(command, include["command"]):
+        if check_context(context, exclude["context"]):
+            return False
+        else:
+            return True
+
+    if check_context(context, exclude["context"]) or check_command(command, exclude["command"]) or check_last_validatation(context):
+        return False
+
+    return True
+
+
+def save_context(context: str) -> None:
+    pidfile = os.path.join(tempfile.gettempdir(), os.getenv("KUBEKEEPER_PIDFILE", default="kubekeeper.pid"))
+
+    with open(pidfile, 'w') as f:
+        f.write(context)
+
+
+def validate_context(current_context: str) -> str:
+    """
+    Ask and change the context, and return the new current context
+    """
+    # Build a list of the existing contexts, with the current context on top
+    existing_contexts: List[str] = subprocess.check_output(["kubectl", "config", "get-contexts", "--output=name"]).decode("utf-8").strip().split("\n")
+    try:
+        existing_contexts.remove(current_context)
+        existing_contexts.insert(0, current_context)
+    except ValueError:
+        pass
+
+    # Limit number of displayed contexts
+    height = 2 + min(len(existing_contexts), 5)
+
+    # Get new context
+    p = subprocess.Popen(["fzf", "--reverse", "--height", f"{height}"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    stdout, _ = p.communicate("\n".join(existing_contexts).encode())
+
+    if p.returncode != 0:
+        raise ValidationError
+
+    new_context: str = stdout.decode("utf-8")
+
+    # Set new context
+    if current_context != new_context.strip():
+        returncode = subprocess.call(["kubectl", "config", "use-context", f"{new_context.strip()}"])
+        if returncode != 0:
+            raise ValidationError
+
+    return new_context
+
+
+def main() -> None:
+    # Parse configuration
+    configdir = os.path.join(os.getenv("KUBEKEEPER_CONFIGDIR", default=os.path.join(os.path.expanduser("~"), ".config", "kubekeeper")))
+
+    excludefile = os.path.join(configdir, "exclude")
+    exclude = configparser.ConfigParser(allow_no_value=True)
+    exclude.read(excludefile)
+
+    includefile = os.path.join(configdir, "include")
+    include = configparser.ConfigParser(allow_no_value=True)
+    include.read(includefile)
+
+    # Set new context if needed
+    context = subprocess.check_output(["kubectl", "config", "current-context"]).decode("utf-8")
+    command = " ".join(sys.argv[1:])
+    if must_run_validatation(context, command, include, exclude):
+        try:
+            print("Context must be validated before continuing.")
+            context = validate_context(context.strip())
+        except ValidationError:
+            print("Failed to validate context. Abort.")
+            return
+
+    # Save new context to prevent revalidation
+    # This only happens if the command is not excluded, so that the validation occurs if *the latest non-excluded* command was run long ago
+    if not (check_command(command, exclude["command"]) and check_context(context, exclude["context"])):
+        save_context(context)
+
+    # Run kubectl
+    os.execvp("kubectl", sys.argv)
+
+
+if __name__ == "__main__":
+    main()
