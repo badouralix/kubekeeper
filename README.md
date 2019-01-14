@@ -1,0 +1,2 @@
+# kubekeeper
+Safeguard for kubectl
