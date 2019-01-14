@@ -1,0 +1,13 @@
+[context]
+minikube
+
+[command]
+api-resources
+api-versions
+cluster-info
+describe
+explain
+get
+logs
+top
+version
