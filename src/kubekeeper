@@ -94,7 +94,7 @@ def validate_context(current_context: str) -> str:
         pass
 
     # Limit number of displayed contexts
-    height = 2 + min(len(existing_contexts), 5)
+    height = 2 + min(len(existing_contexts), 10)
 
     # Get new context
     p = subprocess.Popen(["fzf", "--reverse", "--height", f"{height}"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
