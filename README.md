@@ -16,11 +16,27 @@ Please install the following tools before using `kubekeeper`:
 
 ## Installation
 
+### Bootstrap script
+
 Please **never** run `curl | sh` before reading!
 
 ```shell
 curl -L https://raw.githubusercontent.com/badouralix/kubekeeper/master/bootstrap.sh | sh
 ```
+
+### Do it yourself
+
+`kubekeeper` comes with a default configuration that fits all normal usages of `kubectl`. It can be installed by just
+creating a [`kubekeeper` file](https://github.com/badouralix/kubekeeper/blob/master/src/kubekeeper) into your path:
+
+```shell
+# Download the latest version of kubekeeper
+sudo curl -L https://raw.githubusercontent.com/badouralix/kubekeeper/master/src/kubekeeper -o /usr/local/bin/kubekeeper
+# Apply executable permissions to the binary
+sudo chmod +x /usr/local/bin/kubekeeper
+```
+
+### Aliases and autocompletion
 
 You may add the following lines to your `.zshrc` to use `kubekeeper` with all your existing aliases:
 
