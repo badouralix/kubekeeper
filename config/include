@@ -1,4 +1,6 @@
 [context]
 
 [command]
+apply
 delete
+scale

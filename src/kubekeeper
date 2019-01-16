@@ -100,7 +100,9 @@ def get_config() -> (str, str):
     if "command" not in include:
         include.read_string("""
                             [command]
+                            apply
                             delete
+                            scale
                             """)
 
     # Return parsed configs
