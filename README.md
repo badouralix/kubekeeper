@@ -18,10 +18,10 @@ Please install the following tools before using `kubekeeper`:
 
 ### Bootstrap script
 
-Please **never** run `curl | sh` before reading!
+Please **never** run `sh <(curl)` before reading!
 
 ```shell
-curl -L https://raw.githubusercontent.com/badouralix/kubekeeper/master/bootstrap.sh | sh
+sh <(curl -sL https://raw.githubusercontent.com/badouralix/kubekeeper/master/bootstrap.sh)
 ```
 
 ### Do it yourself
