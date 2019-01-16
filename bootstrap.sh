@@ -75,10 +75,21 @@ run_install() {
     if [[ "$QUIET" != true ]]; then
         echo
         echo "Thank you for installing kubekeeper."
-        echo "Please add the following to your .zshrc:"
+
+        if [[ "$SHELL" =~ "/zsh"$ ]]; then
+            echo "Please add the following to your .zshrc:"
+        else
+            echo "Please add the following to your rc file:"
+        fi
+
         echo
         echo -e "\talias kubectl=kubekeeper"
-        echo -e "\tcompdef kubekeeper=kubectl"
+
+        if [[ "$SHELL" =~ "/zsh"$ ]]; then
+            echo -e "\tcompdef kubekeeper=kubectl"
+        else
+            echo -e "\tcomplete -o default -F __start_kubectl kubekeeper"
+        fi
 
         if [[ ! ":$PATH:" =~ ":$BINDIR:" ]]; then
             echo -e "\texport PATH=$BINDIR:\$PATH"

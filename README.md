@@ -45,6 +45,12 @@ alias kubectl=kubekeeper
 compdef kubekeeper=kubectl
 ```
 
+Autocompletion is also available in other shells with:
+
+```shell
+complete -o default -F __start_kubectl kubekeeper
+```
+
 ## Usage
 
 `kubekeeper` is an invisible wrapper on top of `kubectl`, and must therefore be used just like the latter.
@@ -68,4 +74,4 @@ Other contexts and/or commands may _always_ require validation. They are defined
 | `KUBEKEEPER_PIDFILE` | Pidfile name | `kubekeeper.pid` |
 
 Note that the pidfile is always located in the user temp folder (usually `/tmp` on Linux, and
-`/var/folders/xx/xxx..xxx/T` on Macos).
+`/var/folders/xx/xxx..xxx/T` on macOS).
