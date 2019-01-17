@@ -61,7 +61,7 @@ def get_config() -> (str, str):
     exist, or are incomplete, use default config for missing fields.
     """
     # Read config from configfiles
-    configdir = os.path.join(os.getenv("KUBEKEEPER_CONFIGDIR", default=os.path.join(os.path.expanduser("~"), ".config", "kubekeeper")))
+    configdir = os.path.join(os.getenv("KUBEKEEPER_CONFIGDIR", default=os.path.join(os.path.expanduser("~"), ".kube", "kubekeeper")))
 
     excludefile = os.path.join(configdir, "exclude")
     exclude = configparser.ConfigParser(allow_no_value=True)

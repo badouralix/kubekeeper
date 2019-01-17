@@ -70,7 +70,7 @@ Other contexts and/or commands may _always_ require validation. They are defined
 | envvar | description | default |
 |:------:|:----------- |:-------:|
 | `KUBEKEEPER_CHECK_INTERVAL` | Number of seconds without execution before asking for confirmation again | 900 |
-| `KUBEKEEPER_CONFIGDIR` | Configuration location | `~/.config/kubekeeper` |
+| `KUBEKEEPER_CONFIGDIR` | Configuration location | `~/.kube/kubekeeper` |
 | `KUBEKEEPER_PIDFILE` | Pidfile name | `kubekeeper.pid` |
 
 Note that the pidfile is always located in the user temp folder (usually `/tmp` on Linux, and
