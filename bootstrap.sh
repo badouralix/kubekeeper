@@ -3,7 +3,7 @@
 set -euo pipefail
 
 DEFAULT_BINDIR=${KUBEKEEPER_BINDIR:-"$HOME/.bin"}
-DEFAULT_CONFIGDIR=${KUBEKEEPER_CONFIGDIR:-"$HOME/.config/kubekeeper"}
+DEFAULT_CONFIGDIR=${KUBEKEEPER_CONFIGDIR:-"$HOME/.kube/kubekeeper"}
 DEFAULT_REPO="https://github.com/badouralix/kubekeeper.git"
 
 usage() {
