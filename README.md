@@ -41,6 +41,8 @@ sudo chmod +x /usr/local/bin/kubekeeper
 You may add the following lines to your `.zshrc` to use `kubekeeper` with all your existing aliases:
 
 ```shell
+# kubekeeper completion must be added after kubectl completion
+
 alias kubectl=kubekeeper
 compdef kubekeeper=kubectl
 ```
@@ -48,6 +50,8 @@ compdef kubekeeper=kubectl
 Autocompletion is also available in other shells with:
 
 ```shell
+# kubekeeper completion must be added after kubectl completion
+
 complete -o default -F __start_kubectl kubekeeper
 ```
 
@@ -75,3 +79,16 @@ Other contexts and/or commands may _always_ require validation. They are defined
 
 Note that the pidfile is always located in the user temp folder (usually `/tmp` on Linux, and
 `/var/folders/xx/xxx..xxx/T` on macOS).
+
+## Troubleshooting
+
+### Completion with [`kubectl-fzf`](https://github.com/bonnefoa/kubectl-fzf) shows files and dirs
+
+`kubekeeper` integrates well with [`kubectl-fzf`](https://github.com/bonnefoa/kubectl-fzf). Make sure to define
+completion in the right order:
+
+```shell
+source <(kubectl completion $SHELL)
+source $GOPATH/src/github.com/bonnefoa/kubectl-fzf/kubectl_fzf.sh
+complete -o default -F __start_kubectl kubekeeper
+```
