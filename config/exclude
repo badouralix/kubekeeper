@@ -5,7 +5,12 @@ minikube
 api-resources
 api-versions
 cluster-info
+completion
+config current-context
+config get-clusters
+config get-contexts
 describe
+diff
 explain
 get
 logs
