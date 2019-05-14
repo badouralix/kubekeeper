@@ -88,10 +88,12 @@ def get_config() -> (str, str):
                             config current-context
                             config get-clusters
                             config get-contexts
+                            config view
                             describe
                             diff
                             explain
                             get
+                            help
                             logs
                             top
                             version
