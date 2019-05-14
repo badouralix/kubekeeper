@@ -121,6 +121,10 @@ def identify_actions(context: str, command: str, include: Dict[str, Dict[str, No
     Identify which actions must be taken: validation? record?
     Return one boolean per question.
     """
+    # If the cluster is set as an argument, skip both validation and record
+    if any(arg.startswith("--cluster") for arg in sys.argv):
+        return False, False
+
     if check_context(context, include["context"]):
         if check_command(command, exclude["command"]):
             return False, False
