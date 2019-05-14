@@ -9,10 +9,12 @@ completion
 config current-context
 config get-clusters
 config get-contexts
+config help
 describe
 diff
 explain
 get
+help
 logs
 top
 version
