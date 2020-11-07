@@ -4,11 +4,18 @@
 from typing import Dict, List
 
 import configparser
+import logging
 import os
 import subprocess
 import sys
 import tempfile
 import time
+
+
+# Setup logging
+logging.basicConfig(format="%(message)s")
+log = logging.getLogger()
+log.setLevel(logging.INFO)
 
 
 class ValidationError(Exception):
@@ -127,8 +134,10 @@ def identify_actions(context: str, command: str, include: Dict[str, Dict[str, No
 
     if check_context(context, include["context"]):
         if check_command(command, exclude["command"]):
+            log.debug(f"Command {command} is whitelisted, skipping validation.")
             return False, False
         else:
+            log.debug(f"Command {command} is not whitelisted, triggering validation.")
             return True, True
 
     if check_command(command, include["command"]):
@@ -198,10 +207,10 @@ def main() -> None:
     # Set new context if needed
     if validation:
         try:
-            print("Context must be validated before continuing.")
+            log.info("Context must be validated before continuing.")
             context = validate_context(context.strip())
         except ValidationError:
-            print("Failed to validate context. Abort.")
+            log.error("Failed to validate context. Abort.")
             return
 
     # Save new context to prevent revalidation
