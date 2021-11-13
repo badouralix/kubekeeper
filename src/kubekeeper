@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from typing import Dict, List
-
 import configparser
 import logging
 import os
@@ -10,7 +8,7 @@ import subprocess
 import sys
 import tempfile
 import time
-
+from typing import List, Tuple
 
 # Setup logging
 logging.basicConfig(format="%(message)s")
@@ -22,7 +20,7 @@ class ValidationError(Exception):
     pass
 
 
-def check_command(command: str, whitelist: Dict[str, None]) -> bool:
+def check_command(command: str, whitelist: configparser.SectionProxy) -> bool:
     """
     Return true iff command uses a subcommand in whitelist.
     """
@@ -33,7 +31,7 @@ def check_command(command: str, whitelist: Dict[str, None]) -> bool:
     return False
 
 
-def check_context(context: str, whitelist: Dict[str, None]) -> bool:
+def check_context(context: str, whitelist: configparser.SectionProxy) -> bool:
     """
     Return true iff context is in whitelist.
     """
@@ -44,15 +42,17 @@ def check_last_validatation(context: str) -> bool:
     """
     Return true iff context has already been validated earlier.
     """
-    check_interval = os.getenv("KUBEKEEPER_CHECK_INTERVAL", default=900)
-    pidfile = os.path.join(tempfile.gettempdir(), os.getenv("KUBEKEEPER_PIDFILE", default="kubekeeper.pid"))
+    check_interval = float(os.getenv("KUBEKEEPER_CHECK_INTERVAL", default=900))
+    pidfile = os.path.join(
+        tempfile.gettempdir(), os.getenv("KUBEKEEPER_PIDFILE", default="kubekeeper.pid")
+    )
 
     outdated = False
 
     try:
         if time.time() - os.path.getmtime(pidfile) > check_interval:
             outdated = True
-        with open(pidfile, 'r') as f:
+        with open(pidfile, "r") as f:
             if f.read() != context:
                 outdated = True
     except FileNotFoundError:
@@ -62,13 +62,18 @@ def check_last_validatation(context: str) -> bool:
     return not outdated
 
 
-def get_config() -> (str, str):
+def get_config() -> Tuple[configparser.ConfigParser, configparser.ConfigParser]:
     """
     Read and return exclude and include config files. If config files don't
     exist, or are incomplete, use default config for missing fields.
     """
     # Read config from configfiles
-    configdir = os.path.join(os.getenv("KUBEKEEPER_CONFIGDIR", default=os.path.join(os.path.expanduser("~"), ".kube", "kubekeeper")))
+    configdir = os.path.join(
+        os.getenv(
+            "KUBEKEEPER_CONFIGDIR",
+            default=os.path.join(os.path.expanduser("~"), ".kube", "kubekeeper"),
+        )
+    )
 
     excludefile = os.path.join(configdir, "exclude")
     exclude = configparser.ConfigParser(allow_no_value=True)
@@ -80,50 +85,63 @@ def get_config() -> (str, str):
 
     # Fallback to default config
     if "context" not in exclude:
-        exclude.read_string("""
-                            [context]
-                            minikube
-                            """)
+        exclude.read_string(
+            """
+            [context]
+            minikube
+            """
+        )
 
     if "command" not in exclude:
-        exclude.read_string("""
-                            [command]
-                            api-resources
-                            api-versions
-                            cluster-info
-                            completion
-                            config current-context
-                            config get-clusters
-                            config get-contexts
-                            config view
-                            describe
-                            diff
-                            explain
-                            get
-                            help
-                            logs
-                            top
-                            version
-                            """)
+        exclude.read_string(
+            """
+            [command]
+            api-resources
+            api-versions
+            cluster-info
+            completion
+            config current-context
+            config get-clusters
+            config get-contexts
+            config view
+            describe
+            diff
+            explain
+            get
+            help
+            logs
+            top
+            version
+            """
+        )
 
     if "context" not in include:
-        include.read_string("""
-                            [context]
-                            """)
+        include.read_string(
+            """
+            [context]
+            """
+        )
 
     if "command" not in include:
-        include.read_string("""
-                            [command]
-                            apply
-                            delete
-                            scale
-                            """)
+        include.read_string(
+            """
+            [command]
+            apply
+            delete
+            scale
+            """
+        )
 
     # Return parsed configs
     return exclude, include
 
 
-def identify_actions(context: str, command: str, include: Dict[str, Dict[str, None]], exclude: Dict[str, Dict[str, None]]) -> (bool, bool):
+def identify_actions(
+    context: str,
+    command: str,
+    include: configparser.ConfigParser,
+    exclude: configparser.ConfigParser,
+) -> Tuple[bool, bool]:
     """
     Identify which actions must be taken: validation? record?
     Return one boolean per question.
@@ -146,7 +164,9 @@ def identify_actions(context: str, command: str, include: Dict[str, Dict[str, No
         else:
             return True, True
 
-    if check_context(context, exclude["context"]) or check_command(command, exclude["command"]):
+    if check_context(context, exclude["context"]) or check_command(
+        command, exclude["command"]
+    ):
         return False, False
 
     if check_last_validatation(context):
@@ -156,9 +176,11 @@ def identify_actions(context: str, command: str, include: Dict[str, Dict[str, No
 
 
 def save_context(context: str) -> None:
-    pidfile = os.path.join(tempfile.gettempdir(), os.getenv("KUBEKEEPER_PIDFILE", default="kubekeeper.pid"))
+    pidfile = os.path.join(
+        tempfile.gettempdir(), os.getenv("KUBEKEEPER_PIDFILE", default="kubekeeper.pid")
+    )
 
-    with open(pidfile, 'w') as f:
+    with open(pidfile, "w") as f:
         f.write(context)
 
 
@@ -167,7 +189,12 @@ def validate_context(current_context: str) -> str:
     Ask and change the context, and return the new current context.
     """
     # Build a list of the existing contexts, with the current context on top
-    existing_contexts: List[str] = subprocess.check_output(["kubectl", "config", "get-contexts", "--output=name"]).decode("utf-8").strip().split("\n")
+    existing_contexts: List[str] = (
+        subprocess.check_output(["kubectl", "config", "get-contexts", "--output=name"])
+        .decode("utf-8")
+        .strip()
+        .split("\n")
+    )
     try:
         existing_contexts.remove(current_context)
         existing_contexts.insert(0, current_context)
@@ -178,7 +205,11 @@ def validate_context(current_context: str) -> str:
     height = 2 + min(len(existing_contexts), 10)
 
     # Get new context
-    p = subprocess.Popen(["fzf", "--reverse", "--height", f"{height}"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    p = subprocess.Popen(
+        ["fzf", "--reverse", "--height", f"{height}"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    )
     stdout, _ = p.communicate("\n".join(existing_contexts).encode())
 
     if p.returncode != 0:
@@ -188,7 +219,9 @@ def validate_context(current_context: str) -> str:
 
     # Set new context
     if current_context != new_context.strip():
-        returncode = subprocess.call(["kubectl", "config", "use-context", f"{new_context.strip()}"])
+        returncode = subprocess.call(
+            ["kubectl", "config", "use-context", f"{new_context.strip()}"]
+        )
         if returncode != 0:
             raise ValidationError
 
@@ -200,7 +233,9 @@ def main() -> None:
     exclude, include = get_config()
 
     # Figure out what to do
-    context = subprocess.check_output(["kubectl", "config", "current-context"]).decode("utf-8")
+    context = subprocess.check_output(["kubectl", "config", "current-context"]).decode(
+        "utf-8"
+    )
     command = " ".join(sys.argv[1:])
     validation, record = identify_actions(context, command, include, exclude)
 
