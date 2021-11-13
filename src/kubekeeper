@@ -236,8 +236,11 @@ def main() -> None:
     context = subprocess.check_output(["kubectl", "config", "current-context"]).decode(
         "utf-8"
     )
+    log.debug(f"Found {context.strip()=}")
     command = " ".join(sys.argv[1:])
+    log.debug(f"Received {command=}")
     validation, record = identify_actions(context, command, include, exclude)
+    log.debug(f"Decided {validation=} {record=}")
 
     # Set new context if needed
     if validation:
