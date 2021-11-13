@@ -2,6 +2,7 @@
 minikube
 
 [command]
+__complete
 api-resources
 api-versions
 cluster-info

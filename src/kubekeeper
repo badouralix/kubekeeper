@@ -96,6 +96,7 @@ def get_config() -> Tuple[configparser.ConfigParser, configparser.ConfigParser]:
         exclude.read_string(
             """
             [command]
+            __complete
             api-resources
             api-versions
             cluster-info
