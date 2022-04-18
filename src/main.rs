@@ -95,53 +95,53 @@ fn get_config() -> (
     return (include, exclude);
 }
 
-/// Identify which actions must be taken: validation? record?
+/// Identify which actions must be taken: validation? record? amendment?
 /// Return one boolean per question.
 fn identify_actions(
     context: &str,
     command: &str,
     include: HashMap<&str, Vec<&str>>,
     exclude: HashMap<&str, Vec<&str>>,
-) -> (bool, bool) {
-    // If the cluster is set as an argument, skip both validation and record
+) -> (bool, bool, bool) {
+    // If the context is set as an argument, skip all actions
     for arg in env::args() {
-        if arg.starts_with("--cluster") {
-            return (false, false);
+        if arg.starts_with("--context") {
+            return (false, false, false);
         }
     }
 
     if check_context(context, include["context"].clone()) {
         if check_command(command, exclude["command"].clone()) {
             println!("Command {} is whitelisted, skipping validation.", command);
-            return (false, false);
+            return (false, false, true);
         } else {
             println!(
                 "Command {} is not whitelisted, triggering validation.",
                 command
             );
-            return (true, true);
+            return (true, true, true);
         }
     }
 
     if check_command(command, include["command"].clone()) {
         if check_context(context, exclude["context"].clone()) {
-            return (false, false);
+            return (false, false, true);
         } else {
-            return (true, true);
+            return (true, true, true);
         }
     }
 
     if check_context(context, exclude["context"].clone())
         || check_command(command, exclude["command"].clone())
     {
-        return (false, false);
+        return (false, false, true);
     }
 
     if check_last_validation(context) {
-        return (false, true);
+        return (false, true, true);
     }
 
-    return (true, true);
+    return (true, true, true);
 }
 
 fn save_context(context: &str) -> std::io::Result<()> {
@@ -185,7 +185,7 @@ fn main() {
     // println!("Found context={}", context.trim());
     let command = env::args().skip(1).collect::<Vec<String>>().join(" ");
     // println!("Received command={command}");
-    let (validation, record) = identify_actions(&context, &command, include, exclude);
+    let (validation, record, amendment) = identify_actions(&context, &command, include, exclude);
     // println!("Decided validation={validation} record={record}");
 
     // Set new context if needed
@@ -206,8 +206,12 @@ fn main() {
     }
 
     // Run kubectl with context
-    Command::new("kubectl")
-        .args(env::args().skip(1))
-        .args(vec!["--context", context.trim()])
-        .exec();
+    if amendment {
+        Command::new("kubectl")
+            .args(env::args().skip(1))
+            .args(vec!["--context", context.trim()])
+            .exec();
+    } else {
+        Command::new("kubectl").args(env::args().skip(1)).exec();
+    }
 }
