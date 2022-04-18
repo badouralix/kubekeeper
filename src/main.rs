@@ -82,6 +82,7 @@ fn get_config() -> (
             "get",
             "help",
             "logs",
+            "options",
             "top",
             "version",
         ],
@@ -103,6 +104,11 @@ fn identify_actions(
     include: HashMap<&str, Vec<&str>>,
     exclude: HashMap<&str, Vec<&str>>,
 ) -> (bool, bool, bool) {
+    // If command is empty, skip all actions
+    if command == "" {
+        return (false, false, false);
+    }
+
     // If the context is set as an argument, skip all actions
     for arg in env::args() {
         if arg.starts_with("--context") {
