@@ -7,6 +7,8 @@
 `kubekeeper` asks for context confirmation before running yolo `kubectl` commands on prod clusters. Just like `sudo`,
 confirmation is required only if the command is run for the first time in a while.
 
+![kubekeeper screenshot](https://user-images.githubusercontent.com/19719047/163849148-01c16c1d-3819-4f4b-a438-3a3f7eac5d32.png)
+
 ## Installation
 
 ### Homebrew
