@@ -118,13 +118,10 @@ fn identify_actions(
 
     if check_context(context, include["context"].clone()) {
         if check_command(command, exclude["command"].clone()) {
-            println!("Command {} is whitelisted, skipping validation.", command);
+            // println!("Command '{command}' is excluded, skipping validation.");
             return (false, false, true);
         } else {
-            println!(
-                "Command {} is not whitelisted, triggering validation.",
-                command
-            );
+            // println!("Command '{command}' is not excluded, triggering validation.");
             return (true, true, true);
         }
     }
