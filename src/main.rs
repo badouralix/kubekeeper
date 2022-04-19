@@ -67,7 +67,6 @@ fn get_config() -> (
     exclude.insert(
         "command",
         vec![
-            "__complete",
             "api-resources",
             "api-versions",
             "cluster-info",
@@ -104,8 +103,8 @@ fn identify_actions(
     include: HashMap<&str, Vec<&str>>,
     exclude: HashMap<&str, Vec<&str>>,
 ) -> (bool, bool, bool) {
-    // If command is empty, skip all actions
-    if command == "" {
+    // If command is empty or cobra dynamic completion, skip all actions
+    if command == "" || command.starts_with("__complete") {
         return (false, false, false);
     }
 
