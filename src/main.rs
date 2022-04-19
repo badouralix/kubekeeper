@@ -91,7 +91,7 @@ fn get_config() -> (
     // These contexts and/or commands may _always_ require validation
     let mut include = HashMap::new();
     include.insert("context", vec![]);
-    include.insert("command", vec!["apply", "delete", "scale"]);
+    include.insert("command", vec!["apply", "delete", "edit", "label", "scale"]);
 
     return (include, exclude);
 }
