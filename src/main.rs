@@ -183,11 +183,10 @@ fn validate_context(context: &str) -> std::io::Result<bool> {
 
     match Command::new("sh")
         .arg("-c")
-        .arg("read -n1 && [[ $REPLY == 'y' ]]")
+        .arg("read -n1 && ([[ $REPLY != '' ]] && echo) && [[ $REPLY == 'y' ]]")
         .status()
     {
         Ok(status) => {
-            println!();
             return Ok(status.success());
         }
         Err(_) => {} // If executing a child process fails for some reasons, fallback to reading stdin
