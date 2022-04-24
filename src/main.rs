@@ -104,6 +104,7 @@ fn identify_actions(
     exclude: HashMap<&str, Vec<&str>>,
 ) -> (bool, bool, bool) {
     // If command is empty or cobra dynamic completion, skip all actions
+    // See https://github.com/spf13/cobra/blob/b9460cc/completions.go#L12-L19
     if command == "" || command.starts_with("__complete") {
         return (false, false, false);
     }
