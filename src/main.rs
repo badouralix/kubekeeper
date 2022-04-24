@@ -116,35 +116,56 @@ fn identify_actions(
         }
     }
 
+    // Here we try to figure out if the command is a native kubectl command or a plugin
+    // The --context option can only be prefixed to native commands
+    // See https://github.com/kubernetes/kubernetes/pull/92343
+    let amendment = if command.starts_with("-") {
+        // If a global option is already provided before the command, then we assume it is a native command
+        // It would be better to iterate over all args and exclude options with their value if any
+        // But it would require to be able to handle cases where the option and the value are separated by spaces
+        true
+    } else {
+        let native_kubectl_commands = String::from_utf8(
+            Command::new("kubectl")
+                .args(vec!["__completeNoDesc", ""])
+                .output()
+                .expect("failed to execute process")
+                .stdout,
+        )
+        .unwrap();
+        // It contains an extra ":4\n", but that merely affects the heuristic
+        native_kubectl_commands.contains(&env::args().skip(1).next().unwrap())
+    };
+
     if check_context(context, include["context"].clone()) {
         if check_command(command, exclude["command"].clone()) {
             // println!("Command '{command}' is excluded, skipping validation.");
-            return (false, false, true);
+            return (false, false, amendment);
         } else {
             // println!("Command '{command}' is not excluded, triggering validation.");
-            return (true, true, true);
+            return (true, true, amendment);
         }
     }
 
     if check_command(command, include["command"].clone()) {
         if check_context(context, exclude["context"].clone()) {
-            return (false, false, true);
+            return (false, false, amendment);
         } else {
-            return (true, true, true);
+            return (true, true, amendment);
         }
     }
 
     if check_context(context, exclude["context"].clone())
         || check_command(command, exclude["command"].clone())
     {
-        return (false, false, true);
+        return (false, false, amendment);
     }
 
     if check_last_validation(context) {
-        return (false, true, true);
+        return (false, true, amendment);
     }
 
-    return (true, true, true);
+    return (true, true, amendment);
 }
 
 fn save_context(context: &str) -> std::io::Result<()> {
@@ -189,7 +210,7 @@ fn main() {
     let command = env::args().skip(1).collect::<Vec<String>>().join(" ");
     // println!("Received command={command}");
     let (validation, record, amendment) = identify_actions(&context, &command, include, exclude);
-    // println!("Decided validation={validation} record={record}");
+    // println!("Decided validation={validation} record={record} amendment={amendment}");
 
     // Set new context if needed
     if validation {
@@ -211,8 +232,8 @@ fn main() {
     // Run kubectl with context
     if amendment {
         Command::new("kubectl")
+            .arg(format!("--context={}", context.trim()))
             .args(env::args().skip(1))
-            .args(vec!["--context", context.trim()])
             .exec();
     } else {
         Command::new("kubectl").args(env::args().skip(1)).exec();
