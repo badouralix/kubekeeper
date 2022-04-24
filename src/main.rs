@@ -178,18 +178,25 @@ fn save_context(context: &str) -> std::io::Result<()> {
 
 /// Instead of forking to kubectx, explicitly ask if the current context is correct.
 fn validate_context(context: &str) -> std::io::Result<bool> {
-    print!("Really run command in \x1b[93m{context}\x1b[0m? Enter \"yes\" to continue. Anything else will exit. ");
+    print!("Really run command in \x1b[93m{context}\x1b[0m? Press \"y\" to continue. Anything else will exit. ");
     std::io::stdout().flush()?;
+
+    match Command::new("sh")
+        .arg("-c")
+        .arg("read -n1 && [[ $REPLY == 'y' ]]")
+        .status()
+    {
+        Ok(status) => {
+            println!();
+            return Ok(status.success());
+        }
+        Err(_) => {} // If executing a child process fails for some reasons, fallback to reading stdin
+    }
 
     let mut buffer = String::new();
     std::io::stdin().read_line(&mut buffer)?;
     buffer = buffer.trim().to_string();
-
-    if buffer != "yes" {
-        return Ok(false);
-    }
-
-    Ok(true)
+    return Ok(buffer == "y");
 }
 
 fn main() {
