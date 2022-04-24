@@ -197,7 +197,7 @@ fn main() {
             Ok(true) => {}
             _ => {
                 println!("Failed to validate context. Abort.");
-                return;
+                std::process::exit(1);
             }
         }
     }
