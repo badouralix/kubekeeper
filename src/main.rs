@@ -25,11 +25,11 @@ fn check_context(context: &str, allowlist: Vec<&str>) -> bool {
 /// Return true iff context has already been validated earlier.
 fn check_last_validation(context: &str) -> bool {
     let check_interval: u64 = env::var("KUBEKEEPER_CHECK_INTERVAL")
-        .unwrap_or("900".to_string())
+        .unwrap_or_else(|_| "900".to_string())
         .parse()
         .unwrap_or(900);
     let pidfile = env::temp_dir()
-        .join(env::var("KUBEKEEPER_PIDFILE").unwrap_or("kubekeeper.pid".to_string()));
+        .join(env::var("KUBEKEEPER_PIDFILE").unwrap_or_else(|_| "kubekeeper.pid".to_string()));
 
     let mut outdated = false;
 
@@ -57,6 +57,7 @@ fn check_last_validation(context: &str) -> bool {
 }
 
 /// Return default include and exclude config.
+#[allow(clippy::type_complexity)]
 fn get_config() -> (
     HashMap<&'static str, Vec<&'static str>>,
     HashMap<&'static str, Vec<&'static str>>,
@@ -170,7 +171,7 @@ fn identify_actions(
 
 fn save_context(context: &str) -> std::io::Result<()> {
     let pidfile = env::temp_dir()
-        .join(env::var("KUBEKEEPER_PIDFILE").unwrap_or("kubekeeper.pid".to_string()));
+        .join(env::var("KUBEKEEPER_PIDFILE").unwrap_or_else(|_| "kubekeeper.pid".to_string()));
 
     fs::write(pidfile, context)
 }
@@ -180,17 +181,15 @@ fn validate_context(context: &str) -> std::io::Result<bool> {
     print!("Really run command in \x1b[1;93m{context}\x1b[0m? Press \"y\" to continue. Anything else will exit. ");
     std::io::stdout().flush()?;
 
-    match Command::new("sh")
+    if let Ok(status) = Command::new("sh")
         .arg("-c")
         .arg("read -n1 && ([[ $REPLY != '' ]] && echo) && [[ $REPLY == 'y' ]]")
         .status()
     {
-        Ok(status) => {
-            return Ok(status.success());
-        }
-        Err(_) => {} // If executing a child process fails for some reasons, fallback to reading stdin
+        return Ok(status.success());
     }
 
+    // If executing a child process fails for some reasons, fallback to reading stdin
     let mut buffer = String::new();
     std::io::stdin().read_line(&mut buffer)?;
     buffer = buffer.trim().to_string();
