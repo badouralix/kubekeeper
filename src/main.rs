@@ -172,8 +172,7 @@ fn save_context(context: &str) -> std::io::Result<()> {
     let pidfile = env::temp_dir()
         .join(env::var("KUBEKEEPER_PIDFILE").unwrap_or("kubekeeper.pid".to_string()));
 
-    fs::write(pidfile, context)?;
-    Ok(())
+    return fs::write(pidfile, context);
 }
 
 /// Instead of forking to kubectx, explicitly ask if the current context is correct.
