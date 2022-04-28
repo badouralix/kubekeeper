@@ -14,7 +14,7 @@ fn check_command(command: &str, allowlist: Vec<&str>) -> bool {
         }
     }
 
-    return false;
+    false
 }
 
 /// Return true iff context is in allowlist.
@@ -49,11 +49,11 @@ fn check_last_validation(context: &str) -> bool {
     }
 
     // Use unwrap_or_default to ask for validation if reading from pidfile failed
-    if fs::read_to_string(pidfile.clone()).unwrap_or_default() != context {
+    if fs::read_to_string(pidfile).unwrap_or_default() != context {
         outdated = true;
     }
 
-    return !outdated;
+    !outdated
 }
 
 /// Return default include and exclude config.
@@ -92,7 +92,7 @@ fn get_config() -> (
     include.insert("context", vec![]);
     include.insert("command", vec!["apply", "delete", "edit", "label", "scale"]);
 
-    return (include, exclude);
+    (include, exclude)
 }
 
 /// Identify which actions must be taken: validation? record? amendment?
@@ -105,7 +105,7 @@ fn identify_actions(
 ) -> (bool, bool, bool) {
     // If command is empty or cobra dynamic completion, skip all actions
     // See https://github.com/spf13/cobra/blob/b9460cc/completions.go#L12-L19
-    if command == "" || command.starts_with("__complete") {
+    if command.is_empty() || command.starts_with("__complete") {
         return (false, false, false);
     }
 
@@ -119,7 +119,7 @@ fn identify_actions(
     // Here we try to figure out if the command is a native kubectl command or a plugin
     // The --context option can only be prefixed to native commands
     // See https://github.com/kubernetes/kubernetes/pull/92343
-    let amendment = if command.starts_with("-") {
+    let amendment = if command.starts_with('-') {
         // If a global option is already provided before the command, then we assume it is a native command
         // It would be better to iterate over all args and exclude options with their value if any
         // But it would require to be able to handle cases where the option and the value are separated by spaces
@@ -134,7 +134,7 @@ fn identify_actions(
         )
         .unwrap();
         // It contains an extra ":4\n", but that merely affects the heuristic
-        native_kubectl_commands.contains(&env::args().skip(1).next().unwrap())
+        native_kubectl_commands.contains(&env::args().nth(1).unwrap())
     };
 
     if check_context(context, include["context"].clone()) {
@@ -165,14 +165,14 @@ fn identify_actions(
         return (false, true, amendment);
     }
 
-    return (true, true, amendment);
+    (true, true, amendment)
 }
 
 fn save_context(context: &str) -> std::io::Result<()> {
     let pidfile = env::temp_dir()
         .join(env::var("KUBEKEEPER_PIDFILE").unwrap_or("kubekeeper.pid".to_string()));
 
-    return fs::write(pidfile, context);
+    fs::write(pidfile, context)
 }
 
 /// Instead of forking to kubectx, explicitly ask if the current context is correct.
@@ -194,7 +194,7 @@ fn validate_context(context: &str) -> std::io::Result<bool> {
     let mut buffer = String::new();
     std::io::stdin().read_line(&mut buffer)?;
     buffer = buffer.trim().to_string();
-    return Ok(buffer == "y");
+    Ok(buffer == "y")
 }
 
 fn main() {
