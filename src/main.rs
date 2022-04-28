@@ -177,7 +177,7 @@ fn save_context(context: &str) -> std::io::Result<()> {
 
 /// Instead of forking to kubectx, explicitly ask if the current context is correct.
 fn validate_context(context: &str) -> std::io::Result<bool> {
-    print!("Really run command in \x1b[93m{context}\x1b[0m? Press \"y\" to continue. Anything else will exit. ");
+    print!("Really run command in \x1b[1;93m{context}\x1b[0m? Press \"y\" to continue. Anything else will exit. ");
     std::io::stdout().flush()?;
 
     match Command::new("sh")
