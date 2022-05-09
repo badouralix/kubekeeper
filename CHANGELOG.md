@@ -9,6 +9,7 @@
 - Apply clippy lint suggestions automagically
 - Fix remaining clippy warnings
 - Add changelog
+- Add support for patterns in context include and exclude lists
 
 ## v2.1.0
 

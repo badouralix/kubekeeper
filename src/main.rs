@@ -17,9 +17,79 @@ fn check_command(command: &str, allowlist: Vec<&str>) -> bool {
     false
 }
 
-/// Return true iff context is in allowlist.
+/// Return true iff context matches at least one context pattern in allowlist.
 fn check_context(context: &str, allowlist: Vec<&str>) -> bool {
-    return allowlist.contains(&context.trim());
+    for allowlist_context_pattern in allowlist {
+        if check_context_against_pattern(context, allowlist_context_pattern) {
+            return true;
+        }
+    }
+
+    false
+}
+
+/// Return true iff context matches pattern.
+///
+/// A context contains regular chars. A pattern contains zero, one or many
+/// wildcards, and regular chars. Wildcards can match zero, one or many regular
+/// chars. For instance `kube-production-1` matches `*prod*`.
+///
+/// This algorithm is a tweaked version of the regex backtracking. In the worst
+/// case scenario, it runs in `O(context.len() * pattern.len())`. It is inspired
+/// by https://research.swtch.com/glob.
+fn check_context_against_pattern(context: &str, pattern: &str) -> bool {
+    // Store the context/pattern index of the current iteration
+    let mut current_c_idx = 0;
+    let mut current_p_idx = 0;
+    // Store the context/pattern index to jump to when backtracking
+    let mut backtrack_c_idx = 0;
+    let mut backtrack_p_idx = 0;
+
+    while current_c_idx < context.len() && backtrack_p_idx <= pattern.len() {
+        if current_p_idx < pattern.len() {
+            match pattern.as_bytes()[current_p_idx] {
+                b'*' => {
+                    backtrack_c_idx = current_c_idx + 1;
+                    backtrack_p_idx = current_p_idx + 1;
+
+                    current_p_idx += 1;
+
+                    continue;
+                }
+                _ => {
+                    if context.as_bytes()[current_c_idx] == pattern.as_bytes()[current_p_idx] {
+                        current_c_idx += 1;
+                        current_p_idx += 1;
+
+                        continue;
+                    }
+                }
+            }
+        }
+
+        // At this point, either the end of pattern was reached, or context does not match pattern
+        // If a wildcard was encountered previously, then try to backtrack to the previous known wildcard
+        if backtrack_p_idx != 0 {
+            current_c_idx = backtrack_c_idx;
+            current_p_idx = backtrack_p_idx;
+
+            backtrack_c_idx += 1;
+
+            continue;
+        }
+
+        return false;
+    }
+
+    // If context is shorter the pattern, we still want to return a match when pattern contains trailing wildcards
+    if current_p_idx < pattern.len() {
+        return pattern.as_bytes()[current_p_idx..]
+            .iter()
+            .all(|&char| char == b'*');
+    }
+
+    // No need to check the indices against the lengths since they are only incremented by one per iteration
+    true
 }
 
 /// Return true iff context has already been validated earlier.
@@ -241,5 +311,113 @@ fn main() {
             .exec();
     } else {
         Command::new("kubectl").args(env::args().skip(1)).exec();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn no_wildcard() {
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-production-1"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-production-2"),
+            false,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-production-12"),
+            false,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-prod"),
+            false,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "production-1"),
+            false,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-staging-1"),
+            false,
+        );
+        assert_eq!(check_context_against_pattern("", ""), true);
+    }
+
+    #[test]
+    fn single_wildcard() {
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "*kube-production-1"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-product*ion-1"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-production-1*"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "*-production-1"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-prod*"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "*-staging-1"),
+            false,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-staging*"),
+            false,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-*-1"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-*-2"),
+            false,
+        );
+        assert_eq!(check_context_against_pattern("", "*"), true);
+    }
+
+    #[test]
+    fn multiple_wildcards() {
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "kube-prod*-*"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "*prod*"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "**prod**"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "*"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "*****************"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "******************"),
+            true,
+        );
+        assert_eq!(
+            check_context_against_pattern("kube-production-1", "*staging*"),
+            false,
+        );
+        assert_eq!(check_context_against_pattern("", "*prod*"), false);
     }
 }
