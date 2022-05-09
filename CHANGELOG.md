@@ -12,6 +12,7 @@
 - Add support for patterns in context include and exclude lists
 - Run cargo test in github actions
 - Update context include and exclude lists
+- Update demo screenshot with new validation prompt
 
 ## v2.1.0
 
