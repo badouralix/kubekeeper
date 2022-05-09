@@ -10,6 +10,7 @@
 - Fix remaining clippy warnings
 - Add changelog
 - Add support for patterns in context include and exclude lists
+- Run cargo test in github actions
 
 ## v2.1.0
 

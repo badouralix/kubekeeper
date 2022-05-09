@@ -1,0 +1,17 @@
+name: test
+
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  push:
+    branches:
+    - main
+
+jobs:
+  cargo-test:
+    name: cargo-test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions-rs/cargo@v1
+      with:
+        command: test
