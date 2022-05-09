@@ -134,7 +134,7 @@ fn get_config() -> (
 ) {
     // These contexts and/or commands may _never_ require validation
     let mut exclude = HashMap::new();
-    exclude.insert("context", vec!["minikube"]);
+    exclude.insert("context", vec!["kind-*", "minikube"]);
     exclude.insert(
         "command",
         vec![
@@ -160,7 +160,7 @@ fn get_config() -> (
 
     // These contexts and/or commands may _always_ require validation
     let mut include = HashMap::new();
-    include.insert("context", vec![]);
+    include.insert("context", vec!["*fed*", "*prod*"]);
     include.insert("command", vec!["apply", "delete", "edit", "label", "scale"]);
 
     (include, exclude)

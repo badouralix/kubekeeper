@@ -11,6 +11,7 @@
 - Add changelog
 - Add support for patterns in context include and exclude lists
 - Run cargo test in github actions
+- Update context include and exclude lists
 
 ## v2.1.0
 
