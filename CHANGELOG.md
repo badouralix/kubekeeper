@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v2.2.0
+
 - Add clippy check
 - Simplify save context return value
 - Highlight current context in bold yellow
