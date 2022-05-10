@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Rewrite table-driven tests
+
 ## v2.2.0
 
 - Add clippy check

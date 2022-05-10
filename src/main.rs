@@ -81,7 +81,7 @@ fn check_context_against_pattern(context: &str, pattern: &str) -> bool {
         return false;
     }
 
-    // If context is shorter the pattern, we still want to return a match when pattern contains trailing wildcards
+    // If context is shorter than pattern, we still want to return a match when pattern contains trailing wildcards
     if current_p_idx < pattern.len() {
         return pattern.as_bytes()[current_p_idx..]
             .iter()
@@ -319,105 +319,48 @@ mod tests {
     use super::*;
 
     #[test]
-    fn no_wildcard() {
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-production-1"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-production-2"),
-            false,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-production-12"),
-            false,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-prod"),
-            false,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "production-1"),
-            false,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-staging-1"),
-            false,
-        );
-        assert_eq!(check_context_against_pattern("", ""), true);
-    }
+    fn test_check_context_against_pattern() {
+        let scenarios = [
+            // No wildcard
+            ("kube-production-1", "kube-production-1", true), // Exact match
+            ("kube-production-1", "kube-production-2", false), // Non-matching suffix
+            ("kube-production-1", "kube-staging-1", false),   // Non-matching infix
+            ("kube-production-1", "mesos-production-1", false), // Non-matching prefix
+            ("kube-production-1", "kube-production-123", false), // Missing suffix
+            ("kube-production-1", "kube-prod", false),        // Extra suffix
+            ("kube-production-1", "extra-kube-production-1", false), // Missing prefix
+            ("kube-production-1", "production-1", false),     // Extra prefix
+            ("", "", true),                                   // Empty
+            // Single wildcard
+            ("kube-production-1", "*", true), // Global wildcard
+            ("kube-production-1", "*-production-1", true), // Prefix wildcard
+            ("kube-production-1", "kube-*-1", true), // Infix wildcard
+            ("kube-production-1", "kube-prod*", true), // Suffix wildcard
+            ("kube-production-1", "*kube-production-1", true), // Extra prefix wildcard
+            ("kube-production-1", "kube-product*ion-1", true), // Extra infix wildcard
+            ("kube-production-1", "kube-production-1*", true), // Extra suffic wildcard
+            ("kube-production-1", "*-staging-1", false), // Non-matching suffix
+            ("kube-production-1", "kube-*-2", false), // Non-matching infix
+            ("kube-production-1", "kube-staging*", false), // Non-matching prefix
+            ("", "*", true),                  // Empty
+            // Multiple wildcards
+            ("kube-production-1", "kube-prod*-*", true), // Any wildcards
+            ("kube-production-1", "*prod*", true),       // Contains string
+            ("kube-production-1", "**prod**", true),     // Contains string with repeated wildcards
+            ("kube-production-1", "***", true),          // Repeated wildcards smaller than length
+            ("kube-production-1", "*****************", true), // Repeated wildcards equals to length
+            ("kube-production-1", "********************", true), // Repeated wildcards longer than length
+            ("kube-production-1", "*staging*", false),           // Contains non-matching string
+            ("", "*prod*", false),                               // Non-matching empty
+            ("", "***", true),                                   // Matching empty
+        ];
 
-    #[test]
-    fn single_wildcard() {
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "*kube-production-1"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-product*ion-1"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-production-1*"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "*-production-1"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-prod*"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "*-staging-1"),
-            false,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-staging*"),
-            false,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-*-1"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-*-2"),
-            false,
-        );
-        assert_eq!(check_context_against_pattern("", "*"), true);
-    }
-
-    #[test]
-    fn multiple_wildcards() {
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "kube-prod*-*"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "*prod*"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "**prod**"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "*"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "*****************"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "******************"),
-            true,
-        );
-        assert_eq!(
-            check_context_against_pattern("kube-production-1", "*staging*"),
-            false,
-        );
-        assert_eq!(check_context_against_pattern("", "*prod*"), false);
+        for (context, pattern, expected) in scenarios {
+            assert_eq!(
+                check_context_against_pattern(context, pattern),
+                expected,
+                "context={context} pattern={pattern}",
+            );
+        }
     }
 }
