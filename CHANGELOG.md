@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Rewrite table-driven tests
+- Display namespace in validation prompt
 
 ## v2.2.0
 

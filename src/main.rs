@@ -247,8 +247,9 @@ fn save_context(context: &str) -> std::io::Result<()> {
 }
 
 /// Instead of forking to kubectx, explicitly ask if the current context is correct.
-fn validate_context(context: &str) -> std::io::Result<bool> {
-    print!("Really run command in \x1b[1;93m{context}\x1b[0m? Press \"y\" to continue. Anything else will exit. ");
+fn validate_context(context: &str, namespace: &str) -> std::io::Result<bool> {
+    print!("Really run command in \x1b[1;93m{context}:{namespace}\x1b[0m? ");
+    print!("Press \"y\" to continue. Anything else will exit. ");
     std::io::stdout().flush()?;
 
     if let Ok(status) = Command::new("sh")
@@ -270,7 +271,7 @@ fn main() {
     // Parse configuration
     let (include, exclude) = get_config();
 
-    // Figure out what to do
+    // Fetch current context and namespace
     let context = String::from_utf8(
         Command::new("kubectl")
             .arg("config")
@@ -279,16 +280,40 @@ fn main() {
             .expect("failed to execute process")
             .stdout,
     )
-    .unwrap();
-    // println!("Found context={}", context.trim());
+    .unwrap()
+    .trim()
+    .to_owned();
+    let namespace = {
+        let namespace = String::from_utf8(
+            Command::new("kubectl")
+                .arg("config")
+                .arg("view")
+                .arg("--minify")
+                .arg("--output=jsonpath={..namespace}")
+                .output()
+                .expect("failed to execute process")
+                .stdout,
+        )
+        .unwrap();
+        if namespace.is_empty() {
+            "default".to_string()
+        } else {
+            namespace
+        }
+    };
+    // println!("Found context={context} namespace={namespace}");
+
+    // Rebuild command
     let command = env::args().skip(1).collect::<Vec<String>>().join(" ");
     // println!("Received command={command}");
+
+    // Figure out what to do
     let (validation, record, amendment) = identify_actions(&context, &command, include, exclude);
     // println!("Decided validation={validation} record={record} amendment={amendment}");
 
     // Set new context if needed
     if validation {
-        match validate_context(context.trim()) {
+        match validate_context(&context, &namespace) {
             Ok(true) => {}
             _ => {
                 println!("Failed to validate context. Abort.");
@@ -306,7 +331,8 @@ fn main() {
     // Run kubectl with context
     if amendment {
         Command::new("kubectl")
-            .arg(format!("--context={}", context.trim()))
+            // Context may be empty and will result in running command in the current context
+            .arg(format!("--context={context}"))
             .args(env::args().skip(1))
             .exec();
     } else {
