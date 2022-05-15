@@ -356,7 +356,8 @@ mod tests {
             ("kube-production-1", "kube-prod", false),        // Extra suffix
             ("kube-production-1", "extra-kube-production-1", false), // Missing prefix
             ("kube-production-1", "production-1", false),     // Extra prefix
-            ("", "", true),                                   // Empty
+            ("kube-production-1", "", false),                 // Non-matching empty
+            ("", "", true),                                   // Matching empty
             // Single wildcard
             ("kube-production-1", "*", true), // Global wildcard
             ("kube-production-1", "*-production-1", true), // Prefix wildcard
@@ -364,7 +365,7 @@ mod tests {
             ("kube-production-1", "kube-prod*", true), // Suffix wildcard
             ("kube-production-1", "*kube-production-1", true), // Extra prefix wildcard
             ("kube-production-1", "kube-product*ion-1", true), // Extra infix wildcard
-            ("kube-production-1", "kube-production-1*", true), // Extra suffic wildcard
+            ("kube-production-1", "kube-production-1*", true), // Extra suffix wildcard
             ("kube-production-1", "*-staging-1", false), // Non-matching suffix
             ("kube-production-1", "kube-*-2", false), // Non-matching infix
             ("kube-production-1", "kube-staging*", false), // Non-matching prefix
