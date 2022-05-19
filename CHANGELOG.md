@@ -5,6 +5,7 @@
 - Rewrite table-driven tests
 - Display namespace in validation prompt
 - Add new check context empty test
+- Add rustfmt config file
 
 ## v2.2.0
 

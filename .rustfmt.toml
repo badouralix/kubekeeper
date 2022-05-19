@@ -1,0 +1,4 @@
+# See configuration in https://rust-lang.github.io/rustfmt
+
+max_width = 110
+use_small_heuristics = "Max"

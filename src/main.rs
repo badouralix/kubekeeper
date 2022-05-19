@@ -83,9 +83,7 @@ fn check_context_against_pattern(context: &str, pattern: &str) -> bool {
 
     // If context is shorter than pattern, we still want to return a match when pattern contains trailing wildcards
     if current_p_idx < pattern.len() {
-        return pattern.as_bytes()[current_p_idx..]
-            .iter()
-            .all(|&char| char == b'*');
+        return pattern.as_bytes()[current_p_idx..].iter().all(|&char| char == b'*');
     }
 
     // No need to check the indices against the lengths since they are only incremented by one per iteration
@@ -94,12 +92,10 @@ fn check_context_against_pattern(context: &str, pattern: &str) -> bool {
 
 /// Return true iff context has already been validated earlier.
 fn check_last_validation(context: &str) -> bool {
-    let check_interval: u64 = env::var("KUBEKEEPER_CHECK_INTERVAL")
-        .unwrap_or_else(|_| "900".to_string())
-        .parse()
-        .unwrap_or(900);
-    let pidfile = env::temp_dir()
-        .join(env::var("KUBEKEEPER_PIDFILE").unwrap_or_else(|_| "kubekeeper.pid".to_string()));
+    let check_interval: u64 =
+        env::var("KUBEKEEPER_CHECK_INTERVAL").unwrap_or_else(|_| "900".to_string()).parse().unwrap_or(900);
+    let pidfile =
+        env::temp_dir().join(env::var("KUBEKEEPER_PIDFILE").unwrap_or_else(|_| "kubekeeper.pid".to_string()));
 
     let mut outdated = false;
 
@@ -128,10 +124,7 @@ fn check_last_validation(context: &str) -> bool {
 
 /// Return default include and exclude config.
 #[allow(clippy::type_complexity)]
-fn get_config() -> (
-    HashMap<&'static str, Vec<&'static str>>,
-    HashMap<&'static str, Vec<&'static str>>,
-) {
+fn get_config() -> (HashMap<&'static str, Vec<&'static str>>, HashMap<&'static str, Vec<&'static str>>) {
     // These contexts and/or commands may _never_ require validation
     let mut exclude = HashMap::new();
     exclude.insert("context", vec!["kind-*", "minikube"]);
@@ -240,8 +233,8 @@ fn identify_actions(
 }
 
 fn save_context(context: &str) -> std::io::Result<()> {
-    let pidfile = env::temp_dir()
-        .join(env::var("KUBEKEEPER_PIDFILE").unwrap_or_else(|_| "kubekeeper.pid".to_string()));
+    let pidfile =
+        env::temp_dir().join(env::var("KUBEKEEPER_PIDFILE").unwrap_or_else(|_| "kubekeeper.pid".to_string()));
 
     fs::write(pidfile, context)
 }
@@ -359,17 +352,17 @@ mod tests {
             ("kube-production-1", "", false),                 // Non-matching empty
             ("", "", true),                                   // Matching empty
             // Single wildcard
-            ("kube-production-1", "*", true), // Global wildcard
+            ("kube-production-1", "*", true),              // Global wildcard
             ("kube-production-1", "*-production-1", true), // Prefix wildcard
-            ("kube-production-1", "kube-*-1", true), // Infix wildcard
-            ("kube-production-1", "kube-prod*", true), // Suffix wildcard
+            ("kube-production-1", "kube-*-1", true),       // Infix wildcard
+            ("kube-production-1", "kube-prod*", true),     // Suffix wildcard
             ("kube-production-1", "*kube-production-1", true), // Extra prefix wildcard
             ("kube-production-1", "kube-product*ion-1", true), // Extra infix wildcard
             ("kube-production-1", "kube-production-1*", true), // Extra suffix wildcard
-            ("kube-production-1", "*-staging-1", false), // Non-matching suffix
-            ("kube-production-1", "kube-*-2", false), // Non-matching infix
+            ("kube-production-1", "*-staging-1", false),   // Non-matching suffix
+            ("kube-production-1", "kube-*-2", false),      // Non-matching infix
             ("kube-production-1", "kube-staging*", false), // Non-matching prefix
-            ("", "*", true),                  // Empty
+            ("", "*", true),                               // Empty
             // Multiple wildcards
             ("kube-production-1", "kube-prod*-*", true), // Any wildcards
             ("kube-production-1", "*prod*", true),       // Contains string
@@ -377,9 +370,9 @@ mod tests {
             ("kube-production-1", "***", true),          // Repeated wildcards smaller than length
             ("kube-production-1", "*****************", true), // Repeated wildcards equals to length
             ("kube-production-1", "********************", true), // Repeated wildcards longer than length
-            ("kube-production-1", "*staging*", false),           // Contains non-matching string
-            ("", "*prod*", false),                               // Non-matching empty
-            ("", "***", true),                                   // Matching empty
+            ("kube-production-1", "*staging*", false),   // Contains non-matching string
+            ("", "*prod*", false),                       // Non-matching empty
+            ("", "***", true),                           // Matching empty
         ];
 
         for (context, pattern, expected) in scenarios {
