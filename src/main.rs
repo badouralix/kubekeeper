@@ -246,13 +246,13 @@ fn save_context(context: &str) -> std::io::Result<()> {
 
 /// Instead of forking to kubectx, explicitly ask if the current context is correct.
 fn validate_context(context: &str, namespace: &str) -> std::io::Result<bool> {
-    print!("Really run command in \x1b[1;93m{context}:{namespace}\x1b[0m? ");
-    print!("Press \"y\" to continue. Anything else will exit. ");
+    eprint!("Really run command in \x1b[1;93m{context}:{namespace}\x1b[0m? ");
+    eprint!("Press \"y\" to continue. Anything else will exit. ");
     std::io::stdout().flush()?;
 
     if let Ok(status) = Command::new("sh")
         .arg("-c")
-        .arg("read -n1 && ([[ $REPLY != '' ]] && echo) && [[ $REPLY == 'y' ]]")
+        .arg("read -n1 && ([[ $REPLY != '' ]] && echo 1>&2) && [[ $REPLY == 'y' ]]")
         .status()
     {
         return Ok(status.success());
@@ -299,22 +299,22 @@ fn main() {
             namespace
         }
     };
-    // println!("Found context={context} namespace={namespace}");
+    // eprintln!("Found context={context} namespace={namespace}");
 
     // Rebuild command
     let command = env::args().skip(1).collect::<Vec<String>>().join(" ");
-    // println!("Received command={command}");
+    // eprintln!("Received command={command}");
 
     // Figure out what to do
     let (validation, record, amendment, reason) = identify_actions(&context, &command, include, exclude);
-    // println!("Decided validation={validation} record={record} amendment={amendment} reason={reason}");
+    // eprintln!("Decided validation={validation} record={record} amendment={amendment} reason={reason}");
 
     // Set new context if needed
     if validation {
         match validate_context(&context, &namespace) {
             Ok(true) => {}
             _ => {
-                println!("Failed to validate context. Abort.");
+                eprintln!("Failed to validate context. Abort.");
                 std::process::exit(1);
             }
         }

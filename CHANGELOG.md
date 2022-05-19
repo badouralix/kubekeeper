@@ -7,6 +7,7 @@
 - Add new check context empty test
 - Add rustfmt config file
 - Add plain text reason when identifying actions
+- Print kubekeeper output to stderr
 
 ## v2.2.0
 
