@@ -160,23 +160,28 @@ fn get_config() -> (HashMap<&'static str, Vec<&'static str>>, HashMap<&'static s
 }
 
 /// Identify which actions must be taken: validation? record? amendment?
-/// Return one boolean per question.
+/// Return one boolean per question, and the reason explaining this choice.
 fn identify_actions(
     context: &str,
     command: &str,
     include: HashMap<&str, Vec<&str>>,
     exclude: HashMap<&str, Vec<&str>>,
-) -> (bool, bool, bool) {
-    // If command is empty or cobra dynamic completion, skip all actions
+) -> (bool, bool, bool, &'static str) {
+    // If command is empty, skip all actions
+    if command.is_empty() {
+        return (false, false, false, "command is empty");
+    }
+
+    // If command is cobra dynamic completion, skip all actions
     // See https://github.com/spf13/cobra/blob/b9460cc/completions.go#L12-L19
-    if command.is_empty() || command.starts_with("__complete") {
-        return (false, false, false);
+    if command.starts_with("__complete") {
+        return (false, false, false, "command is cobra dynamic completion");
     }
 
     // If the context is set as an argument, skip all actions
     for arg in env::args() {
         if arg.starts_with("--context") {
-            return (false, false, false);
+            return (false, false, false, "context option is already provided");
         }
     }
 
@@ -191,7 +196,7 @@ fn identify_actions(
     } else {
         let native_kubectl_commands = String::from_utf8(
             Command::new("kubectl")
-                .args(vec!["__completeNoDesc", ""])
+                .args(["__completeNoDesc", ""])
                 .output()
                 .expect("failed to execute process")
                 .stdout,
@@ -203,33 +208,33 @@ fn identify_actions(
 
     if check_context(context, include["context"].clone()) {
         if check_command(command, exclude["command"].clone()) {
-            // println!("Command '{command}' is excluded, skipping validation.");
-            return (false, false, amendment);
+            return (false, false, amendment, "context is included and command is excluded");
         } else {
-            // println!("Command '{command}' is not excluded, triggering validation.");
-            return (true, true, amendment);
+            return (true, true, amendment, "context is included and command is not excluded");
         }
     }
 
     if check_command(command, include["command"].clone()) {
         if check_context(context, exclude["context"].clone()) {
-            return (false, false, amendment);
+            return (false, false, amendment, "command is included and context is excluded");
         } else {
-            return (true, true, amendment);
+            return (true, true, amendment, "command is included and context is not excluded");
         }
     }
 
-    if check_context(context, exclude["context"].clone())
-        || check_command(command, exclude["command"].clone())
-    {
-        return (false, false, amendment);
+    if check_context(context, exclude["context"].clone()) {
+        return (false, false, amendment, "context is excluded and command is not included");
+    }
+
+    if check_command(command, exclude["command"].clone()) {
+        return (false, false, amendment, "command is excluded and context is not included");
     }
 
     if check_last_validation(context) {
-        return (false, true, amendment);
+        return (false, true, amendment, "context has already been validated earlier");
     }
 
-    (true, true, amendment)
+    (true, true, amendment, "fallback to default behavior")
 }
 
 fn save_context(context: &str) -> std::io::Result<()> {
@@ -301,8 +306,8 @@ fn main() {
     // println!("Received command={command}");
 
     // Figure out what to do
-    let (validation, record, amendment) = identify_actions(&context, &command, include, exclude);
-    // println!("Decided validation={validation} record={record} amendment={amendment}");
+    let (validation, record, amendment, reason) = identify_actions(&context, &command, include, exclude);
+    // println!("Decided validation={validation} record={record} amendment={amendment} reason={reason}");
 
     // Set new context if needed
     if validation {

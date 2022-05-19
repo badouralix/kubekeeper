@@ -6,6 +6,7 @@
 - Display namespace in validation prompt
 - Add new check context empty test
 - Add rustfmt config file
+- Add plain text reason when identifying actions
 
 ## v2.2.0
 
