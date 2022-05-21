@@ -8,6 +8,7 @@
 - Add rustfmt config file
 - Add plain text reason when identifying actions
 - Print kubekeeper output to stderr
+- Update doc comments
 
 ## v2.2.0
 

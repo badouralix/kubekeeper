@@ -6,7 +6,7 @@ use std::os::unix::process::CommandExt;
 use std::process::Command;
 use std::time::SystemTime;
 
-/// Return true iff command uses a subcommand in allowlist.
+/// Returns true iff command uses a subcommand in allowlist.
 fn check_command(command: &str, allowlist: Vec<&str>) -> bool {
     for allowlist_command_prefix in allowlist {
         if command.starts_with(allowlist_command_prefix) {
@@ -17,7 +17,7 @@ fn check_command(command: &str, allowlist: Vec<&str>) -> bool {
     false
 }
 
-/// Return true iff context matches at least one context pattern in allowlist.
+/// Returns true iff context matches at least one context pattern in allowlist.
 fn check_context(context: &str, allowlist: Vec<&str>) -> bool {
     for allowlist_context_pattern in allowlist {
         if check_context_against_pattern(context, allowlist_context_pattern) {
@@ -28,7 +28,7 @@ fn check_context(context: &str, allowlist: Vec<&str>) -> bool {
     false
 }
 
-/// Return true iff context matches pattern.
+/// Returns true iff context matches pattern.
 ///
 /// A context contains regular chars. A pattern contains zero, one or many
 /// wildcards, and regular chars. Wildcards can match zero, one or many regular
@@ -90,7 +90,7 @@ fn check_context_against_pattern(context: &str, pattern: &str) -> bool {
     true
 }
 
-/// Return true iff context has already been validated earlier.
+/// Returns true iff context has already been validated earlier.
 fn check_last_validation(context: &str) -> bool {
     let check_interval: u64 =
         env::var("KUBEKEEPER_CHECK_INTERVAL").unwrap_or_else(|_| "900".to_string()).parse().unwrap_or(900);
@@ -122,7 +122,7 @@ fn check_last_validation(context: &str) -> bool {
     !outdated
 }
 
-/// Return default include and exclude config.
+/// Returns default include and exclude config.
 #[allow(clippy::type_complexity)]
 fn get_config() -> (HashMap<&'static str, Vec<&'static str>>, HashMap<&'static str, Vec<&'static str>>) {
     // These contexts and/or commands may _never_ require validation
@@ -159,8 +159,8 @@ fn get_config() -> (HashMap<&'static str, Vec<&'static str>>, HashMap<&'static s
     (include, exclude)
 }
 
-/// Identify which actions must be taken: validation? record? amendment?
-/// Return one boolean per question, and the reason explaining this choice.
+/// Identifies which actions must be taken: validation? record? amendment?
+/// Returns one boolean per question, and the reason explaining this choice.
 fn identify_actions(
     context: &str,
     command: &str,
