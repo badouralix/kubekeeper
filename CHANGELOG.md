@@ -9,6 +9,7 @@
 - Add plain text reason when identifying actions
 - Print kubekeeper output to stderr
 - Update doc comments
+- Add debug mode
 
 ## v2.2.0
 

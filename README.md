@@ -69,6 +69,7 @@ complete -o default -F __start_kubectl kubekeeper
 |    Environment Variable     | Description                                                              |     Default      |
 | :-------------------------: | :----------------------------------------------------------------------- | :--------------: |
 | `KUBEKEEPER_CHECK_INTERVAL` | Number of seconds without execution before asking for confirmation again |       900        |
+|     `KUBEKEEPER_DEBUG`      | If set, runs in debug mode                                               |     _unset_      |
 |    `KUBEKEEPER_PIDFILE`     | Pidfile name                                                             | `kubekeeper.pid` |
 
 Note that the pidfile is always located in the user temp folder (usually `/tmp` on Linux, and

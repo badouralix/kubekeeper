@@ -6,6 +6,18 @@ use std::os::unix::process::CommandExt;
 use std::process::Command;
 use std::time::SystemTime;
 
+/// Prints to the standard error with a newline, if the debug environment variable is set.
+macro_rules! edebugln {
+    ($($arg:tt)*) => (
+        match env::var("KUBEKEEPER_DEBUG") {
+            Ok(_) => {
+                eprintln!($($arg)*)
+            }
+            Err(_) => {}
+        }
+    )
+}
+
 /// Returns true iff command uses a subcommand in allowlist.
 fn check_command(command: &str, allowlist: Vec<&str>) -> bool {
     for allowlist_command_prefix in allowlist {
@@ -299,15 +311,15 @@ fn main() {
             namespace
         }
     };
-    // eprintln!("Found context={context} namespace={namespace}");
+    edebugln!("Found context={context} namespace={namespace}");
 
     // Rebuild command
     let command = env::args().skip(1).collect::<Vec<String>>().join(" ");
-    // eprintln!("Received command={command}");
+    edebugln!("Received command={command}");
 
     // Figure out what to do
     let (validation, record, amendment, reason) = identify_actions(&context, &command, include, exclude);
-    // eprintln!("Decided validation={validation} record={record} amendment={amendment} reason={reason}");
+    edebugln!("Decided validation={validation} record={record} amendment={amendment} reason={reason}");
 
     // Set new context if needed
     if validation {
