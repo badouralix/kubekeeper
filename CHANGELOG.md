@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v2.3.0
+
 - Rewrite table-driven tests
 - Display namespace in validation prompt
 - Add new check context empty test
