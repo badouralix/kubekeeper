@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Use official markdownlint github action
+
 ## v2.3.0
 
 - Rewrite table-driven tests
