@@ -160,13 +160,15 @@ fn get_config() -> (HashMap<&'static str, Vec<&'static str>>, HashMap<&'static s
             "options",
             "top",
             "version",
+            "wait",
         ],
     );
 
     // These contexts and/or commands may _always_ require validation
     let mut include = HashMap::new();
     include.insert("context", vec!["*fed*", "*prod*"]);
-    include.insert("command", vec!["apply", "delete", "edit", "label", "scale"]);
+    include
+        .insert("command", vec!["annotate", "apply", "delete", "edit", "label", "patch", "replace", "scale"]);
 
     (include, exclude)
 }

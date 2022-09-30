@@ -4,6 +4,7 @@
 
 - Use official markdownlint github action
 - Use variable debug format in debug logs
+- Update command include and exclude lists
 
 ## v2.3.0
 
