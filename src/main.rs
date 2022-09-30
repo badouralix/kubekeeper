@@ -174,28 +174,29 @@ fn get_config() -> (HashMap<&'static str, Vec<&'static str>>, HashMap<&'static s
 }
 
 /// Identifies which actions must be taken: validation? record? amendment?
-/// Returns one boolean per question, and the reason explaining this choice.
+/// Returns one boolean per question, the color of the context (red for included
+/// contexts, yellow otherwise) and a human-readable reason for these choices.
 fn identify_actions(
     context: &str,
     command: &str,
     include: HashMap<&str, Vec<&str>>,
     exclude: HashMap<&str, Vec<&str>>,
-) -> (bool, bool, bool, &'static str) {
+) -> (bool, bool, bool, &'static str, &'static str) {
     // If command is empty, skip all actions
     if command.is_empty() {
-        return (false, false, false, "command is empty");
+        return (false, false, false, "", "command is empty");
     }
 
     // If command is cobra dynamic completion, skip all actions
     // See https://github.com/spf13/cobra/blob/b9460cc/completions.go#L12-L19
     if command.starts_with("__complete") {
-        return (false, false, false, "command is cobra dynamic completion");
+        return (false, false, false, "", "command is cobra dynamic completion");
     }
 
     // If the context is set as an argument, skip all actions
     for arg in env::args() {
         if arg.starts_with("--context") {
-            return (false, false, false, "context option is already provided");
+            return (false, false, false, "", "context option is already provided");
         }
     }
 
@@ -222,33 +223,33 @@ fn identify_actions(
 
     if check_context(context, include["context"].clone()) {
         if check_command(command, exclude["command"].clone()) {
-            return (false, false, amendment, "context is included and command is excluded");
+            return (false, false, amendment, "", "context is included and command is excluded");
         } else {
-            return (true, true, amendment, "context is included and command is not excluded");
+            return (true, true, amendment, "\x1b[1;91m", "context is included and command is not excluded");
         }
     }
 
     if check_command(command, include["command"].clone()) {
         if check_context(context, exclude["context"].clone()) {
-            return (false, false, amendment, "command is included and context is excluded");
+            return (false, false, amendment, "", "command is included and context is excluded");
         } else {
-            return (true, true, amendment, "command is included and context is not excluded");
+            return (true, true, amendment, "\x1b[1;93m", "command is included and context is not excluded");
         }
     }
 
     if check_context(context, exclude["context"].clone()) {
-        return (false, false, amendment, "context is excluded and command is not included");
+        return (false, false, amendment, "", "context is excluded and command is not included");
     }
 
     if check_command(command, exclude["command"].clone()) {
-        return (false, false, amendment, "command is excluded and context is not included");
+        return (false, false, amendment, "", "command is excluded and context is not included");
     }
 
     if check_last_validation(context) {
-        return (false, true, amendment, "context has already been validated earlier");
+        return (false, true, amendment, "", "context has already been validated earlier");
     }
 
-    (true, true, amendment, "fallback to default behavior")
+    (true, true, amendment, "\x1b[1;93m", "fallback to default behavior")
 }
 
 fn save_context(context: &str) -> std::io::Result<()> {
@@ -259,8 +260,9 @@ fn save_context(context: &str) -> std::io::Result<()> {
 }
 
 /// Instead of forking to kubectx, explicitly ask if the current context is correct.
-fn validate_context(context: &str, namespace: &str) -> std::io::Result<bool> {
-    eprint!("Really run command in \x1b[1;93m{context}:{namespace}\x1b[0m? ");
+#[allow(clippy::print_literal)]
+fn validate_context(context: &str, namespace: &str, color: &str) -> std::io::Result<bool> {
+    eprint!("Really run command in {}{context}:{namespace}{}? ", color, "\x1b[0m");
     eprint!("Press \"y\" to continue. Anything else will exit. ");
     std::io::stdout().flush()?;
 
@@ -320,14 +322,15 @@ fn main() {
     edebugln!("Received command={command:?}");
 
     // Figure out what to do
-    let (validation, record, amendment, reason) = identify_actions(&context, &command, include, exclude);
+    let (validation, record, amendment, color, reason) =
+        identify_actions(&context, &command, include, exclude);
     edebugln!(
-        "Decided validation={validation:?} record={record:?} amendment={amendment:?} reason={reason:?}"
+        "Decided validation={validation:?} record={record:?} amendment={amendment:?} color={color:?} reason={reason:?}"
     );
 
     // Set new context if needed
     if validation {
-        match validate_context(&context, &namespace) {
+        match validate_context(&context, &namespace, color) {
             Ok(true) => {}
             _ => {
                 eprintln!("Failed to validate context. Abort.");
