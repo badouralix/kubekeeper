@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Apply clippy lint suggestions on macro rules
+
 ## v2.4.0
 
 - Use official markdownlint github action

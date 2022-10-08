@@ -9,11 +9,8 @@ use std::time::SystemTime;
 /// Prints to the standard error with a newline, if the debug environment variable is set.
 macro_rules! edebugln {
     ($($arg:tt)*) => (
-        match env::var("KUBEKEEPER_DEBUG") {
-            Ok(_) => {
-                eprintln!($($arg)*)
-            }
-            Err(_) => {}
+        if env::var("KUBEKEEPER_DEBUG").is_ok() {
+            eprintln!($($arg)*)
         }
     )
 }
