@@ -5,6 +5,7 @@
 - Apply clippy lint suggestions on macro rules
 - Bump markdownlint-cli2 action from 7 to 8 (<https://github.com/badouralix/kubekeeper/pull/3>)
 - Update magic to detect native kubectl commands (<https://github.com/badouralix/kubekeeper/pull/5>)
+- Fix link in changelog
 
 ## v2.4.0
 
@@ -57,7 +58,7 @@
 - Add demo screenshot
 - Add lint workflow
 - Add dependabot config file
-- Bump actions/checkout from 2 to 3 (#2)
+- Bump actions/checkout from 2 to 3 (<https://github.com/badouralix/kubekeeper/pull/2>)
 - Add new commands without validation
 
 ## v2.0.0
