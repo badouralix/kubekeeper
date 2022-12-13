@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Apply clippy lint suggestions on macro rules
+- Bump markdownlint-cli2 action from 7 to 8 (<https://github.com/badouralix/kubekeeper/pull/3>)
 
 ## v2.4.0
 
