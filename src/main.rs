@@ -206,16 +206,22 @@ fn identify_actions(
         // But it would require to be able to handle cases where the option and the value are separated by spaces
         true
     } else {
-        let native_kubectl_commands = String::from_utf8(
+        String::from_utf8(
             Command::new("kubectl")
-                .args(["__completeNoDesc", ""])
+                .args(["__complete", ""])
                 .output()
                 .expect("failed to execute process")
                 .stdout,
         )
-        .unwrap();
-        // It contains an extra ":4\n", but that merely affects the heuristic
-        native_kubectl_commands.contains(&env::args().nth(1).unwrap())
+        .unwrap()
+        .lines()
+        // Filter out plugins based on description from https://github.com/kubernetes/kubernetes/pull/105867
+        .filter(|line| !line.ends_with("is a plugin installed by the user"))
+        // Extract native kubectl commands without description
+        // It contains an extra ":4", but that merely affects the heuristic
+        .map(|line| line.split('\t').next().unwrap().to_owned())
+        // Match first kubekeeper argument against native kubectl commands
+        .any(|native_kubectl_command| env::args().nth(1).unwrap() == native_kubectl_command)
     };
 
     if check_context(context, include["context"].clone()) {
