@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Mirror repository to gitlab
+
 ## v2.5.0
 
 - Apply clippy lint suggestions on macro rules
