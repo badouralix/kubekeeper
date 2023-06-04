@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Mirror repository to gitlab
+- Bump markdownlint-cli2 action from 8 to 10 (<https://github.com/badouralix/kubekeeper/pull/7>)
 
 ## v2.5.0
 
